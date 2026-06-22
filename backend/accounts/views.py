@@ -28,8 +28,8 @@ def register_user(request):
 @api_view(['GET'])
 @permission_classes([IsAdmin])
 def list_users(request):
-    """List all system users (excluding students/parents)."""
-    users = User.objects.exclude(role__in=['student', 'parent']).order_by('role', 'username')
+    """List all system users."""
+    users = User.objects.all().order_by('role', 'username')
     data = [
         {
             'id':                 u.id,
@@ -66,7 +66,7 @@ def create_system_user(request):
     if not all([username, role, password]):
         return Response({'error': 'username, role and password are required.'}, status=400)
 
-    allowed = [r[0] for r in User.ROLE_CHOICES if r[0] not in ('student', 'parent')]
+    allowed = [r[0] for r in User.ROLE_CHOICES]
     if role not in allowed:
         return Response({'error': f'Invalid role.'}, status=400)
 
@@ -151,8 +151,6 @@ def delete_user(request, user_id):
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=404)
-    if user.role in ('student', 'parent'):
-        return Response({'error': 'Cannot delete student/parent here.'}, status=400)
     username = user.username
     user.delete()
     return Response({'message': f'User "{username}" deleted.'})

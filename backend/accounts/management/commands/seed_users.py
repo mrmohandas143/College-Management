@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.stdout.write(self.style.WARNING('Deleting all existing users...'))
-        User.objects.all().delete()
+        User.objects.exclude(username='Das').delete()
 
         self.stdout.write(self.style.SUCCESS('Creating fresh users:\n'))
         for username, password, role, email, is_staff, is_superuser in USERS:

@@ -3,6 +3,7 @@ from .views import (
     FeeListCreateView, FeeDetailView,
     FeeStructureListCreateView, FeeStructureDetailView,
     StudentFeeView, ProcessPaymentView, GenerateBulkFeesView,
+    ParentPortalView,
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('student/<int:student_id>/', StudentFeeView.as_view()),
     path('process-payment/', ProcessPaymentView.as_view()),
     path('generate-bulk/', GenerateBulkFeesView.as_view()),
+    path('parent-portal/', ParentPortalView.as_view()),
 ]

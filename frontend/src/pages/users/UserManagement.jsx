@@ -38,6 +38,8 @@ const ROLES = [
   { value: 'placement_officer',  label: 'Placement Officer' },
   { value: 'transport_incharge', label: 'Transport Incharge' },
   { value: 'alumni_coordinator', label: 'Alumni Coordinator' },
+  { value: 'parent',             label: 'Parent' },
+  { value: 'student',            label: 'Student' },
   { value: 'custom',             label: 'Custom' },
 ]
 
@@ -46,6 +48,7 @@ const ROLE_COLOR = {
   accountant: '#059669', faculty: '#d97706', librarian: '#db2777',
   hostel_warden: '#ea580c', placement_officer: '#16a34a',
   transport_incharge: '#0284c7', alumni_coordinator: '#9333ea',
+  parent: '#059669', student: '#2563eb',
   custom: '#7c3aed',
 }
 

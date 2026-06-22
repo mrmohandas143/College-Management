@@ -28,5 +28,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['username']           = user.username
         token['email']              = user.email
         token['linked_student_id']  = user.linked_student_id
+        token['student_id']         = user.linked_student_id
         token['is_super_admin']     = user.role == 'super_admin'
         return token

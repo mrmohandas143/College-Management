@@ -7,7 +7,6 @@ import LandingPage from '../pages/LandingPage'
 
 // Auth
 import Login    from '../pages/auth/Login'
-import Register from '../pages/auth/Register'
 
 // Admin Panel
 import AdminPanel from '../pages/admin/AdminPanel'
@@ -57,6 +56,7 @@ import AddFee       from '../pages/fees/AddFee'
 import PaymentHistory from '../pages/fees/PaymentHistory'
 import FeeStructure from '../pages/fees/FeeStructure'
 import StudentPayFee from '../pages/fees/StudentPayFee'
+import ParentPortal from '../pages/fees/ParentPortal'
 
 // Library
 import LibraryModule from '../pages/library/LibraryModule'
@@ -117,7 +117,6 @@ export default function AppRoutes() {
       {/* ── Landing & Authentication ── */}
       <Route path="/"         element={<LandingPage />} />
       <Route path="/login"    element={<Login />} />
-      <Route path="/register" element={<Register />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
@@ -131,6 +130,7 @@ export default function AppRoutes() {
           {/* ── Student self-service ── */}
           <Route path="/my-profile" element={R(['student'], <MyProfile />)} />
           <Route path="/fees/pay"   element={R(['student'], <StudentPayFee />)} />
+          <Route path="/parent-portal" element={R(['parent'], <ParentPortal />)} />
 
           {/* ── Student Management Module ── */}
           <Route path="/students"          element={R(ACADEMIC, <StudentList />)} />

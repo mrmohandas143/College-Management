@@ -70,12 +70,41 @@ export default function ParentPortal() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [tab, setTab] = useState('overview')
+  const [allStudents, setAllStudents] = useState([])
+  const [selectedStudent, setSelectedStudent] = useState('')
+  const [linking, setLinking] = useState(false)
 
-  useEffect(() => {
-    api.get('/fees/parent-portal/').then(r => setData(r.data)).catch(e => {
+  const fetchPortalData = () => {
+    api.get('/fees/parent-portal/').then(r => {
+      setData(r.data)
+      if (r.data.no_link) {
+        api.get('/students/').then(res => {
+          setAllStudents(res.data.results ?? res.data)
+        }).catch(() => {})
+      }
+    }).catch(e => {
       setError(e.response?.data?.error || 'Failed to load portal data')
     }).finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchPortalData()
   }, [])
+
+  const handleLinkStudent = async (e) => {
+    e.preventDefault()
+    if (!selectedStudent) return
+    setLinking(true)
+    try {
+      await api.post('/fees/parent-portal/', { student_id: selectedStudent })
+      setLoading(true)
+      fetchPortalData()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to link student')
+    } finally {
+      setLinking(false)
+    }
+  }
 
   if (loading) return <Loader />
   if (error) return (
@@ -87,6 +116,50 @@ export default function ParentPortal() {
       </p>
     </div>
   )
+
+  if (data?.no_link) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: 20 }}>
+        <div className="card" style={{ width: '100%', maxWidth: 480, padding: '32px 24px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <span style={{ fontSize: 48 }}>👨‍👩‍👧</span>
+            <h2 style={{ marginTop: 12, fontWeight: 800 }}>Link Your Child</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+              To view grades, attendance, and fees, link your parent account to your child's student record.
+            </p>
+          </div>
+
+          <form onSubmit={handleLinkStudent}>
+            <div className="form-group">
+              <label className="form-label">Select Student</label>
+              <select 
+                value={selectedStudent} 
+                onChange={e => setSelectedStudent(e.target.value)} 
+                required
+                style={{ padding: '10px 12px' }}
+              >
+                <option value="">-- Choose student --</option>
+                {allStudents.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.first_name} {s.last_name} ({s.roll_number || s.register_number} — {s.course})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ width: '100%', justifyContent: 'center', marginTop: 12, height: 42 }}
+              disabled={linking}
+            >
+              {linking ? 'Linking student...' : 'Link Student Account'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
 
   const { student, fees, notifications, summary } = data
   const paid = fees.filter(f => f.status === 'paid')

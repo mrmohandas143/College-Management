@@ -121,6 +121,14 @@ export default function Sidebar({ open }) {
           </div>
         )}
 
+        {/* Parent self-service */}
+        {is('parent') && (
+          <div className="nav-section">
+            <div className="nav-label">My Account</div>
+            {link('/parent-portal', 'dashboard', 'Parent Portal')}
+          </div>
+        )}
+
         {/* Academic */}
         {isAcademic && (
           <NavGroup label="Academics" defaultOpen>

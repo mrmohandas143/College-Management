@@ -118,3 +118,75 @@ class GenerateBulkFeesView(APIView):
             return Response({'message': f'Generated {len(student_ids)} fee records.'})
         except FeeStructure.DoesNotExist:
             return Response({'error': 'Fee structure not found'}, status=404)
+
+
+from django.db.models import Sum
+from students.models import Student
+from students.serializers import StudentSerializer
+from notifications.models import Notification
+from accounts.permissions import IsParent
+
+class ParentPortalView(APIView):
+    permission_classes = [IsParent]
+
+    def get(self, request):
+        student = request.user.linked_student
+        if not student:
+            return Response({
+                'no_link': True,
+                'message': 'No student linked to this parent account.'
+            }, status=200)
+
+        student_data = StudentSerializer(student).data
+        
+        fees = Fee.objects.filter(student=student).order_by('-created_at')
+        fees_data = FeeSerializer(fees, many=True).data
+
+        total_fees = fees.aggregate(total=Sum('amount'))['total'] or 0
+        paid_fees = fees.filter(status='paid').aggregate(total=Sum('amount'))['total'] or 0
+        pending_fees = fees.filter(status='pending').aggregate(total=Sum('amount'))['total'] or 0
+        overdue_fees = fees.filter(status='overdue').aggregate(total=Sum('amount'))['total'] or 0
+
+        summary = {
+            'total': total_fees,
+            'paid': paid_fees,
+            'pending': pending_fees + overdue_fees
+        }
+
+        notifs = Notification.objects.filter(target__in=['parents', 'all'], is_active=True).order_by('-created_at')
+        notifs_data = []
+        for n in notifs:
+            notifs_data.append({
+                'id': n.id,
+                'title': n.title,
+                'message': n.message,
+                'notification_type': 'general' if n.notif_type == 'info' else
+                                     'due_reminder' if n.notif_type == 'warning' else
+                                     'overdue' if n.notif_type == 'alert' else
+                                     'payment_confirm' if n.notif_type == 'success' else 'general',
+                'created_at': n.created_at,
+                'is_read': False
+            })
+
+        return Response({
+            'student': student_data,
+            'fees': fees_data,
+            'notifications': notifs_data,
+            'summary': summary
+        })
+
+    def post(self, request):
+        student_id = request.data.get('student_id')
+        if not student_id:
+            return Response({'error': 'student_id is required.'}, status=400)
+
+        try:
+            student = Student.objects.get(id=student_id)
+            request.user.linked_student = student
+            request.user.save()
+            return Response({
+                'success': True,
+                'message': f'Successfully linked to student {student.first_name} {student.last_name}'
+            })
+        except Student.DoesNotExist:
+            return Response({'error': 'Student not found.'}, status=404)

@@ -43,7 +43,7 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    if (role === 'student') return
+    if (role === 'student' || role === 'parent') return
 
     const ADMIN_ROLES   = ['super_admin', 'admin']
     const FINANCE_ROLES = ['super_admin', 'admin', 'accountant']
@@ -61,6 +61,7 @@ export default function Dashboard() {
       setFees(fee.data.results     ?? fee.data)
       if (role === 'faculty') {
         const match = (fac.data.results ?? fac.data).find(f =>
+          f.email === user?.email ||
           f.email === user?.username ||
           f.email?.split('@')[0] === user?.username ||
           `${f.first_name.toLowerCase()}.${f.last_name.toLowerCase()}` === user?.username?.toLowerCase()
@@ -68,9 +69,10 @@ export default function Dashboard() {
         if (match) setMyFacultyId(match.id)
       }
     }).finally(() => setLoading(false))
-  }, [role])
+  }, [role, user])
 
   if (role === 'student') return <Navigate to="/my-profile" replace />
+  if (role === 'parent') return <Navigate to="/parent-portal" replace />
   if (role === 'faculty' && myFacultyId) return <Navigate to={`/faculty/${myFacultyId}`} replace />
   if (role === 'faculty' && !loading && !myFacultyId) return <Navigate to="/students" replace />
   // Specialist roles — show a focused dashboard (no redirect)
