@@ -18,7 +18,7 @@ class StudentListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.role == 'student':
-            return Student.objects.filter(id=user.student_id) if user.student_id else Student.objects.none()
+            return Student.objects.filter(id=user.linked_student_id) if user.linked_student_id else Student.objects.none()
         return Student.objects.all().order_by('-created_at')
 
 
@@ -36,6 +36,6 @@ class StudentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         obj = super().get_object()
         user = self.request.user
-        if user.role == 'student' and user.student_id != obj.id:
+        if user.role == 'student' and user.linked_student_id != obj.id:
             raise PermissionDenied('You can only view your own profile.')
         return obj

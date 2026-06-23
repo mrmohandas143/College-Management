@@ -97,13 +97,13 @@ export default function AddFaculty() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Username</div>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 15, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 12px' }}>
+                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 15, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 12px' }}>
                     {success.username}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Password</div>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 15, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 12px' }}>
+                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 15, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 12px' }}>
                     {success.password}
                   </div>
                 </div>

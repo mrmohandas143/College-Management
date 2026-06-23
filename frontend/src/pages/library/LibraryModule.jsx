@@ -17,26 +17,43 @@ export default function LibraryModule() {
   const [showIssueForm, setShowIssueForm] = useState(false)
   const [form, setForm]             = useState({ title: '', author: '', isbn: '', category: '', publisher: '', edition: '', total_copies: 1, available_copies: 1, rack_number: '' })
   const [issueForm, setIssueForm]   = useState({ book: '', member_name: '', member_type: 'student', member_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '' })
+  const [students, setStudents]     = useState([])
+  const [faculty, setFaculty]       = useState([])
 
   const load = async () => {
     setLoading(true)
-    const [b, c, i, s] = await Promise.all([
+    const [b, c, i, s, sRes, fRes] = await Promise.all([
       api.get(ENDPOINTS.LIBRARY_BOOKS, { params: search ? { search } : {} }),
       api.get(ENDPOINTS.LIBRARY_CATEGORIES),
       api.get(ENDPOINTS.LIBRARY_ISSUES, { params: { status: 'issued' } }),
       api.get(`${ENDPOINTS.LIBRARY_BOOKS}stats/`),
+      api.get(ENDPOINTS.STUDENTS),
+      api.get(ENDPOINTS.FACULTY),
     ])
     setBooks(b.data.results ?? b.data)
     setCategories(c.data.results ?? c.data)
     setIssues(i.data.results ?? i.data)
     setStats(s.data)
+    setStudents(sRes.data.results ?? sRes.data)
+    setFaculty(fRes.data.results ?? fRes.data)
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
   const set  = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-  const setI = e => setIssueForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const setI = e => {
+    const { name, value } = e.target
+    setIssueForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'member_type') {
+        updated.member = ''
+        updated.member_name = ''
+        updated.member_id = ''
+      }
+      return updated
+    })
+  }
 
   const saveBook = async (e) => {
     e.preventDefault()
@@ -48,7 +65,8 @@ export default function LibraryModule() {
 
   const saveIssue = async (e) => {
     e.preventDefault()
-    await api.post(ENDPOINTS.LIBRARY_ISSUES, issueForm)
+    const { member, ...payload } = issueForm
+    await api.post(ENDPOINTS.LIBRARY_ISSUES, payload)
     setShowIssueForm(false)
     setIssueForm({ book: '', member_name: '', member_type: 'student', member_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '' })
     load()
@@ -185,14 +203,49 @@ export default function LibraryModule() {
                         {books.filter(b => b.available_copies > 0).map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
                       </select>
                     </div>
-                    <div className="form-group"><label className="form-label">Member Name</label><input name="member_name" value={issueForm.member_name} onChange={setI} required /></div>
                     <div className="form-group">
                       <label className="form-label">Member Type</label>
                       <select name="member_type" value={issueForm.member_type} onChange={setI}>
                         <option value="student">Student</option><option value="faculty">Faculty</option><option value="staff">Staff</option>
                       </select>
                     </div>
-                    <div className="form-group"><label className="form-label">Member ID</label><input name="member_id" value={issueForm.member_id} onChange={setI} /></div>
+                    {['student', 'faculty'].includes(issueForm.member_type) ? (
+                      <div className="form-group">
+                        <label className="form-label">Select Member</label>
+                        <select name="member" value={issueForm.member || ''} onChange={e => {
+                          const val = Number(e.target.value)
+                          if (issueForm.member_type === 'student') {
+                            const st = students.find(s => s.id === val)
+                            if (st) {
+                              setIssueForm(f => ({ ...f, member: st.id, member_name: `${st.first_name} ${st.last_name}`, member_id: st.register_number }))
+                            } else {
+                              setIssueForm(f => ({ ...f, member: '', member_name: '', member_id: '' }))
+                            }
+                          } else {
+                            const fac = faculty.find(f => f.id === val)
+                            if (fac) {
+                              setIssueForm(f => ({ ...f, member: fac.id, member_name: `${fac.first_name} ${fac.last_name}`, member_id: String(fac.id) }))
+                            } else {
+                              setIssueForm(f => ({ ...f, member: '', member_name: '', member_id: '' }))
+                            }
+                          }
+                        }} required>
+                          <option value="">Select member</option>
+                          {issueForm.member_type === 'student'
+                            ? students.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.register_number})</option>)
+                            : faculty.map(f => <option key={f.id} value={f.id}>{f.first_name} {f.last_name} ({f.department})</option>)
+                          }
+                        </select>
+                      </div>
+                    ) : null}
+                    <div className="form-group">
+                      <label className="form-label">Member Name</label>
+                      <input name="member_name" value={issueForm.member_name} readOnly={['student', 'faculty'].includes(issueForm.member_type)} style={{ background: ['student', 'faculty'].includes(issueForm.member_type) ? 'var(--bg)' : 'inherit' }} onChange={setI} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Member ID</label>
+                      <input name="member_id" value={issueForm.member_id} readOnly={['student', 'faculty'].includes(issueForm.member_type)} style={{ background: ['student', 'faculty'].includes(issueForm.member_type) ? 'var(--bg)' : 'inherit' }} onChange={setI} />
+                    </div>
                     <div className="form-group"><label className="form-label">Issue Date</label><input type="date" name="issue_date" value={issueForm.issue_date} onChange={setI} required /></div>
                     <div className="form-group"><label className="form-label">Due Date</label><input type="date" name="due_date" value={issueForm.due_date} onChange={setI} required /></div>
                   </div>

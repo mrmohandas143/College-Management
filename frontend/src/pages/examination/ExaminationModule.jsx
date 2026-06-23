@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import { getStudents } from '../../services/studentService'
+import { COURSES, DEPARTMENTS, COURSE_DEPARTMENTS } from '../../utils/constants'
 
 const GRADE_COLOR = { O: '#22c55e', 'A+': '#16a34a', A: '#2563eb', 'B+': '#7c3aed', B: '#0891b2', C: '#f59e0b', F: '#ef4444', AB: '#6b7280' }
 const EXAM_BADGE  = { scheduled: 'badge-warning', ongoing: 'badge-info', completed: 'badge-success', cancelled: 'badge-danger' }
@@ -14,16 +15,19 @@ export default function ExaminationModule() {
   const [selectedExam, setSelectedExam] = useState(null)
   const [showForm, setShowForm] = useState(null)
   const [form, setForm]         = useState({})
+  const [subjects, setSubjects] = useState([])
 
   const load = async () => {
-    const [e, s, st] = await Promise.all([
+    const [e, s, st, sub] = await Promise.all([
       api.get('/examination/exams/'),
       getStudents(),
       api.get('/examination/exams/stats/'),
+      api.get('/academics/subjects/'),
     ])
     setExams(e.data.results ?? e.data)
     setStudents(s.data.results ?? s.data)
     setStats(st.data)
+    setSubjects(sub.data.results ?? sub.data)
   }
 
   const loadResults = async (examId) => {
@@ -35,7 +39,16 @@ export default function ExaminationModule() {
 
   useEffect(() => { load() }, [])
 
-  const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const set = e => {
+    const { name, value } = e.target
+    setForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'course') {
+        updated.department = ''
+      }
+      return updated
+    })
+  }
 
   const save = async (endpoint, e) => {
     e.preventDefault()
@@ -93,9 +106,56 @@ export default function ExaminationModule() {
                 <div className="form-panel-title">Schedule New Exam</div>
                 <form onSubmit={e => save('/examination/exams/', e)}>
                   <div className="form-grid">
-                    {[['Exam Name','name'],['Course','course'],['Department','department'],['Subject','subject'],['Subject Code','subject_code'],['Room','room'],['Academic Year','academic_year']].map(([l, n]) => (
-                      <div key={n} className="form-group"><label className="form-label">{l}</label><input name={n} value={form[n] || ''} onChange={set} required={['name','course','subject','exam_date'].includes(n)} /></div>
-                    ))}
+                    <div className="form-group">
+                      <label className="form-label">Exam Name</label>
+                      <input name="name" value={form.name || ''} onChange={set} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Course</label>
+                      <select name="course" value={form.course || ''} onChange={set} required>
+                        <option value="">Select Course</option>
+                        {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Department</label>
+                      <select name="department" value={form.department || ''} onChange={set}>
+                        <option value="">Select Department</option>
+                        {(COURSE_DEPARTMENTS[form.course] || []).map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Subject</label>
+                      <select name="subject" value={form.subject || ''} onChange={e => {
+                        const val = e.target.value
+                        const matched = subjects.find(sub => sub.name === val)
+                        setForm(f => ({
+                          ...f,
+                          subject: val,
+                          subject_code: matched ? matched.code : ''
+                        }))
+                      }} required>
+                        <option value="">Select Subject</option>
+                        {subjects.filter(sub => (!form.course || sub.course === form.course) && (!form.department || sub.department === form.department)).map(sub => (
+                          <option key={sub.id} value={sub.name}>{sub.name} ({sub.code})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Subject Code</label>
+                      <input name="subject_code" value={form.subject_code || ''} onChange={set} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Room</label>
+                      <input name="room" value={form.room || ''} onChange={set} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Academic Year</label>
+                      <select name="academic_year" value={form.academic_year || ''} onChange={set}>
+                        <option value="">Select Year</option>
+                        {['2024-25', '2025-26', '2026-27'].map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
                     <div className="form-group">
                       <label className="form-label">Type</label>
                       <select name="exam_type" value={form.exam_type || 'internal'} onChange={set}>
@@ -103,7 +163,12 @@ export default function ExaminationModule() {
                         <option value="practical">Practical</option><option value="viva">Viva</option>
                       </select>
                     </div>
-                    <div className="form-group"><label className="form-label">Semester</label><input type="number" name="semester" value={form.semester || 1} onChange={set} /></div>
+                    <div className="form-group">
+                      <label className="form-label">Semester</label>
+                      <select name="semester" value={form.semester || 1} onChange={set}>
+                        {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                      </select>
+                    </div>
                     <div className="form-group"><label className="form-label">Exam Date</label><input type="date" name="exam_date" value={form.exam_date || ''} onChange={set} required /></div>
                     <div className="form-group"><label className="form-label">Start Time</label><input type="time" name="start_time" value={form.start_time || ''} onChange={set} /></div>
                     <div className="form-group"><label className="form-label">End Time</label><input type="time" name="end_time" value={form.end_time || ''} onChange={set} /></div>

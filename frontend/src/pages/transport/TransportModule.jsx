@@ -12,27 +12,40 @@ export default function TransportModule() {
   const [stats, setStats]           = useState(null)
   const [showForm, setShowForm]     = useState(null)
   const [form, setForm]             = useState({})
+  const [students, setStudents]     = useState([])
 
   const load = async () => {
-    const [ro, ve, al, st] = await Promise.all([
+    const [ro, ve, al, st, sRes] = await Promise.all([
       api.get(ENDPOINTS.TRANSPORT_ROUTES),
       api.get(ENDPOINTS.TRANSPORT_VEHICLES),
       api.get(ENDPOINTS.TRANSPORT_ALLOTMENTS, { params: { is_active: true } }),
       api.get(`${ENDPOINTS.TRANSPORT_ROUTES}stats/`),
+      api.get(ENDPOINTS.STUDENTS),
     ])
     setRoutes(ro.data.results ?? ro.data)
     setVehicles(ve.data.results ?? ve.data)
     setAllotments(al.data.results ?? al.data)
     setStats(st.data)
+    setStudents(sRes.data.results ?? sRes.data)
   }
 
   useEffect(() => { load() }, [])
 
-  const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const set = e => {
+    const { name, value } = e.target
+    setForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'route') {
+        updated.boarding_stop = ''
+      }
+      return updated
+    })
+  }
 
   const save = async (endpoint, e) => {
     e.preventDefault()
-    await api.post(endpoint, form)
+    const { student, ...payload } = form
+    await api.post(endpoint, payload)
     setShowForm(null); setForm({}); load()
   }
 
@@ -185,8 +198,28 @@ export default function TransportModule() {
                 <div className="form-panel-title">Allot Transport</div>
                 <form onSubmit={e => save(ENDPOINTS.TRANSPORT_ALLOTMENTS, e)}>
                   <div className="form-grid">
-                    <div className="form-group"><label className="form-label">Student Name</label><input name="student_name" value={form.student_name || ''} onChange={set} required /></div>
-                    <div className="form-group"><label className="form-label">Student ID</label><input name="student_id" value={form.student_id || ''} onChange={set} /></div>
+                    <div className="form-group">
+                      <label className="form-label">Student</label>
+                      <select name="student" value={form.student || ''} onChange={e => {
+                        const st = students.find(s => s.id === Number(e.target.value))
+                        if (st) {
+                          setForm(f => ({ ...f, student: st.id, student_name: `${st.first_name} ${st.last_name}`, student_id: st.register_number }))
+                        } else {
+                          setForm(f => ({ ...f, student: '', student_name: '', student_id: '' }))
+                        }
+                      }} required>
+                        <option value="">Select student</option>
+                        {students.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.register_number})</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Student Name</label>
+                      <input name="student_name" value={form.student_name || ''} readOnly style={{ background: 'var(--bg)' }} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Student ID</label>
+                      <input name="student_id" value={form.student_id || ''} readOnly style={{ background: 'var(--bg)' }} />
+                    </div>
                     <div className="form-group">
                       <label className="form-label">Route</label>
                       <select name="route" value={form.route || ''} onChange={set} required>
@@ -201,7 +234,15 @@ export default function TransportModule() {
                         {vehicles.map(v => <option key={v.id} value={v.id}>{v.reg_number}</option>)}
                       </select>
                     </div>
-                    <div className="form-group"><label className="form-label">Boarding Stop</label><input name="boarding_stop" value={form.boarding_stop || ''} onChange={set} /></div>
+                    <div className="form-group">
+                      <label className="form-label">Boarding Stop</label>
+                      <select name="boarding_stop" value={form.boarding_stop || ''} onChange={set}>
+                        <option value="">Select stop</option>
+                        {(routes.find(r => r.id === Number(form.route))?.stops?.split(',').map(s => s.trim()).filter(Boolean) || []).map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
                     <div className="form-group"><label className="form-label">Valid From</label><input type="date" name="valid_from" value={form.valid_from || ''} onChange={set} required /></div>
                   </div>
                   <div className="form-actions">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
+import { COURSES, DEPARTMENTS, COURSE_DEPARTMENTS } from '../../utils/constants'
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday']
 const DAY_SHORT = { monday:'Mon', tuesday:'Tue', wednesday:'Wed', thursday:'Thu', friday:'Fri', saturday:'Sat' }
@@ -11,20 +12,42 @@ export default function TimetableModule() {
   const [filterSem, setFilterSem]     = useState('')
   const [showForm, setShowForm]       = useState(false)
   const [form, setForm]               = useState({ course: '', department: '', semester: 1, day: 'monday', period: 1, start_time: '', end_time: '', subject: '', subject_code: '', faculty_name: '', room: '', academic_year: '' })
+  const [subjects, setSubjects]       = useState([])
+  const [faculty, setFaculty]         = useState([])
 
   const load = async () => {
     const params = {}
     if (filterCourse) params.course = filterCourse
     if (filterSem)    params.semester = filterSem
-    const res = await api.get('/timetable/', { params })
+    const [res, subRes, facRes] = await Promise.all([
+      api.get('/timetable/', { params }),
+      api.get('/academics/subjects/'),
+      api.get('/faculty/'),
+    ])
     const list = res.data.results ?? res.data
     setEntries(list)
     setCourses([...new Set(list.map(e => e.course))].filter(Boolean))
+    setSubjects(subRes.data.results ?? subRes.data)
+    setFaculty(facRes.data.results ?? facRes.data)
   }
 
   useEffect(() => { load() }, [filterCourse, filterSem])
 
-  const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const set = e => {
+    const { name, value } = e.target
+    setForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'course') {
+        updated.department = ''
+        updated.subject = ''
+        updated.subject_code = ''
+      } else if (name === 'department' || name === 'semester') {
+        updated.subject = ''
+        updated.subject_code = ''
+      }
+      return updated
+    })
+  }
 
   const save = async (e) => {
     e.preventDefault()
@@ -55,17 +78,80 @@ export default function TimetableModule() {
           <div className="form-panel-title">Add Timetable Entry</div>
           <form onSubmit={save}>
             <div className="form-grid">
-              {[['Course','course'],['Department','department'],['Subject','subject'],['Subject Code','subject_code'],['Faculty','faculty_name'],['Room','room'],['Academic Year','academic_year']].map(([l, n]) => (
-                <div key={n} className="form-group"><label className="form-label">{l}</label><input name={n} value={form[n] || ''} onChange={set} required={['course','subject'].includes(n)} /></div>
-              ))}
+              <div className="form-group">
+                <label className="form-label">Course</label>
+                <select name="course" value={form.course || ''} onChange={set} required>
+                  <option value="">Select Course</option>
+                  {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Department</label>
+                <select name="department" value={form.department || ''} onChange={set}>
+                  <option value="">Select Department</option>
+                  {(COURSE_DEPARTMENTS[form.course] || []).map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Subject</label>
+                <select name="subject" value={form.subject || ''} onChange={e => {
+                  const val = e.target.value
+                  const matched = subjects.find(sub => sub.name === val)
+                  setForm(f => ({
+                    ...f,
+                    subject: val,
+                    subject_code: matched ? matched.code : ''
+                  }))
+                }} required>
+                  <option value="">Select Subject</option>
+                  {subjects.filter(sub => (!form.course || sub.course === form.course) && (!form.department || sub.department === form.department) && (!form.semester || sub.semester === Number(form.semester))).map(sub => (
+                    <option key={sub.id} value={sub.name}>{sub.name} ({sub.code})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Subject Code</label>
+                <input name="subject_code" value={form.subject_code || ''} onChange={set} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Faculty</label>
+                <select name="faculty_name" value={form.faculty_name || ''} onChange={set}>
+                  <option value="">Select Faculty</option>
+                  {faculty.map(f => {
+                    const name = `${f.first_name} ${f.last_name}`
+                    return <option key={f.id} value={name}>{name} ({f.department})</option>
+                  })}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Room</label>
+                <input name="room" value={form.room || ''} onChange={set} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Academic Year</label>
+                <select name="academic_year" value={form.academic_year || ''} onChange={set}>
+                  <option value="">Select Year</option>
+                  {['2024-25', '2025-26', '2026-27'].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
               <div className="form-group">
                 <label className="form-label">Day</label>
                 <select name="day" value={form.day} onChange={set}>
                   {DAYS.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
                 </select>
               </div>
-              <div className="form-group"><label className="form-label">Period</label><input type="number" name="period" value={form.period} onChange={set} min={1} /></div>
-              <div className="form-group"><label className="form-label">Semester</label><input type="number" name="semester" value={form.semester} onChange={set} min={1} /></div>
+              <div className="form-group">
+                <label className="form-label">Period</label>
+                <select name="period" value={form.period} onChange={set}>
+                  {[1,2,3,4,5,6,7,8].map(p => <option key={p} value={p}>Period {p}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Semester</label>
+                <select name="semester" value={form.semester} onChange={set}>
+                  {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                </select>
+              </div>
               <div className="form-group"><label className="form-label">Start Time</label><input type="time" name="start_time" value={form.start_time} onChange={set} required /></div>
               <div className="form-group"><label className="form-label">End Time</label><input type="time" name="end_time" value={form.end_time} onChange={set} required /></div>
             </div>

@@ -161,7 +161,7 @@ export default function Notifications() {
               </thead>
               <tbody>
                 {filtered.map(n => (
-                  <tr key={n.id} style={{ background: n.is_read ? 'transparent' : '#fffbeb' }}>
+                  <tr key={n.id} style={{ background: n.is_read ? 'transparent' : 'var(--primary-light)' }}>
                     <td style={{ fontWeight: n.is_read ? 400 : 700 }}>{n.title}</td>
                     <td><span className={`badge ${TYPE_BADGE[n.notification_type]}`}>{TYPE_LABEL[n.notification_type]}</span></td>
                     <td>{n.student_name || <span style={{ color: 'var(--text-muted)' }}>All</span>}</td>
@@ -191,8 +191,8 @@ export default function Notifications() {
       {/* Single Notification Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-          <div style={{ background: '#fff', borderRadius: 12, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 12, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', border: '1px solid var(--border)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontWeight: 700, fontSize: 16 }}>Send Notification</div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6b7280' }}>✕</button>
             </div>

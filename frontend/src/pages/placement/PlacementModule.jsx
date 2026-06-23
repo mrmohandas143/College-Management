@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import { ENDPOINTS } from '../../api/endpoints'
+import { COURSES } from '../../utils/constants'
 
 const APP_BADGE  = { applied: 'badge-gray', shortlisted: 'badge-warning', selected: 'badge-success', rejected: 'badge-danger' }
 const DRV_BADGE  = { upcoming: 'badge-warning', ongoing: 'badge-info', completed: 'badge-success', cancelled: 'badge-danger' }
@@ -203,9 +204,20 @@ export default function PlacementModule() {
                 <div className="form-panel-title">Add Application</div>
                 <form onSubmit={e => save(ENDPOINTS.PLACEMENT_APPLICATIONS, e)}>
                   <div className="form-grid">
-                    {[['Student Name','student_name'],['Student ID','student_id'],['Course','course'],['CGPA','cgpa','number']].map(([l, n, t='text']) => (
+                    {[['Student Name','student_name'],['Student ID','student_id']].map(([l, n, t='text']) => (
                       <div key={n} className="form-group"><label className="form-label">{l}</label><input type={t} name={n} value={form[n] || ''} onChange={set} /></div>
                     ))}
+                    <div className="form-group">
+                      <label className="form-label">Course</label>
+                      <select name="course" value={form.course || ''} onChange={set} required>
+                        <option value="">Select Course</option>
+                        {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">CGPA</label>
+                      <input type="number" name="cgpa" value={form.cgpa || ''} onChange={set} />
+                    </div>
                   </div>
                   <div className="form-actions">
                     <button className="btn btn-primary" type="submit">Save</button>

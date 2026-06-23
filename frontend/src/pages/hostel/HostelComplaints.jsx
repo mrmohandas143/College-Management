@@ -12,16 +12,19 @@ export default function HostelComplaints() {
   const [showForm, setShowForm]     = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [form, setForm] = useState({ student_name: '', room: '', complaint: '' })
+  const [students, setStudents]     = useState([])
 
   const load = async (status = filterStatus) => {
     setLoading(true)
     const params = status ? { status } : {}
-    const [cRes, rRes] = await Promise.all([
+    const [cRes, rRes, sRes] = await Promise.all([
       api.get(ENDPOINTS.HOSTEL_COMPLAINTS, { params }),
       api.get(ENDPOINTS.HOSTEL_ROOMS),
+      api.get(ENDPOINTS.STUDENTS),
     ])
     setComplaints(cRes.data.results ?? cRes.data)
     setRooms(rRes.data.results ?? rRes.data)
+    setStudents(sRes.data.results ?? sRes.data)
     setLoading(false)
   }
 
@@ -62,7 +65,10 @@ export default function HostelComplaints() {
               <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Student Name</label>
-                  <input className="form-control" name="student_name" value={form.student_name} onChange={set} required />
+                  <select className="form-control" name="student_name" value={form.student_name} onChange={set} required>
+                    <option value="">Select student</option>
+                    {students.map(s => <option key={s.id} value={`${s.first_name} ${s.last_name}`}>{s.first_name} {s.last_name} ({s.register_number})</option>)}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Room</label>

@@ -135,7 +135,7 @@ function ActionMenu({ items }) {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-          <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 20, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.13)', minWidth: 165, overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 20, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.13)', minWidth: 165, overflow: 'hidden' }}>
             {items.map((item, i) => (
               <button key={i} onClick={() => { setOpen(false); item.onClick() }}
                 style={{ display: 'flex', width: '100%', padding: '10px 14px', background: 'none', border: 'none', borderTop: i > 0 ? '1px solid var(--border)' : 'none', cursor: 'pointer', fontSize: 13, color: item.danger ? '#dc2626' : 'var(--text)', textAlign: 'left' }}>

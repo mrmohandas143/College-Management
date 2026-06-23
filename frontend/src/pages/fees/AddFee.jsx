@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { createFee } from '../../services/feeService'
 import { getStudents } from '../../services/studentService'
 import api from '../../api/axios'
+import { ENDPOINTS } from '../../api/endpoints'
 
 const COURSES = ['B.Tech', 'M.Tech', 'BCA', 'MCA', 'B.Sc', 'M.Sc', 'B.Com', 'M.Com', 'BBA', 'MBA']
 
@@ -53,14 +54,20 @@ export default function AddFee() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const [routes, setRoutes]         = useState([])
+  const [vehicles, setVehicles]     = useState([])
 
   useEffect(() => {
     Promise.all([
       getStudents(),
       api.get('/fees/scholarships/').catch(() => ({ data: [] })),
-    ]).then(([s, sc]) => {
+      api.get(ENDPOINTS.TRANSPORT_ROUTES).catch(() => ({ data: [] })),
+      api.get(ENDPOINTS.TRANSPORT_VEHICLES).catch(() => ({ data: [] })),
+    ]).then(([s, sc, r, v]) => {
       setStudents(s.data)
       setScholarships(sc.data.filter(s => s.is_active))
+      setRoutes(r.data.results ?? r.data)
+      setVehicles(v.data.results ?? v.data)
     })
   }, [])
 
@@ -243,11 +250,17 @@ export default function AddFee() {
               <div className="form-grid-3">
                 <div className="form-group">
                   <label className="form-label">Route *</label>
-                  <input value={form.route} onChange={e => set('route', e.target.value)} placeholder="e.g. Route 5A" required />
+                  <select value={form.route} onChange={e => set('route', e.target.value)} required>
+                    <option value="">Select route</option>
+                    {routes.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Bus Number *</label>
-                  <input value={form.bus_number} onChange={e => set('bus_number', e.target.value)} placeholder="e.g. BUS-12" required />
+                  <select value={form.bus_number} onChange={e => set('bus_number', e.target.value)} required>
+                    <option value="">Select vehicle</option>
+                    {vehicles.map(v => <option key={v.id} value={v.reg_number}>{v.reg_number}</option>)}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Transport Charges (₹) *</label>
@@ -342,7 +355,9 @@ export default function AddFee() {
               </div>
               <div className="form-group">
                 <label className="form-label">Academic Year</label>
-                <input value={form.academic_year} onChange={e => set('academic_year', e.target.value)} />
+                <select value={form.academic_year} onChange={e => set('academic_year', e.target.value)}>
+                  {['2024-25', '2025-26', '2026-27'].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Status</label>

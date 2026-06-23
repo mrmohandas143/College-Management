@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
+import { COURSES, DEPARTMENTS, COURSE_DEPARTMENTS } from '../../utils/constants'
 
 const EVENT_COLORS = { holiday: '#ef4444', exam: '#f59e0b', event: '#2563eb', semester_start: '#22c55e', semester_end: '#7c3aed' }
 const TYPE_BADGE = { theory: 'badge-info', practical: 'badge-warning', elective: 'badge-purple' }
@@ -19,7 +20,16 @@ export default function AcademicsModule() {
 
   useEffect(() => { load() }, [])
 
-  const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const set = e => {
+    const { name, value } = e.target
+    setForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'course') {
+        updated.department = ''
+      }
+      return updated
+    })
+  }
 
   const save = async (endpoint, e) => {
     e.preventDefault()
@@ -60,13 +70,36 @@ export default function AcademicsModule() {
                 <div className="form-panel-title">New Subject</div>
                 <form onSubmit={e => save('/academics/subjects/', e)}>
                   <div className="form-grid">
-                    {[['Subject Name', 'name'], ['Code', 'code'], ['Course', 'course'], ['Department', 'department'], ['Faculty', 'faculty_name']].map(([l, n]) => (
+                    {[['Subject Name', 'name'], ['Code', 'code']].map(([l, n]) => (
                       <div key={n} className="form-group">
                         <label className="form-label">{l}</label>
-                        <input name={n} value={form[n] || ''} onChange={set} required={['name', 'code', 'course'].includes(n)} />
+                        <input name={n} value={form[n] || ''} onChange={set} required />
                       </div>
                     ))}
-                    <div className="form-group"><label className="form-label">Semester</label><input type="number" name="semester" value={form.semester || 1} onChange={set} /></div>
+                    <div className="form-group">
+                      <label className="form-label">Course</label>
+                      <select name="course" value={form.course || ''} onChange={set} required>
+                        <option value="">Select Course</option>
+                        {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Department</label>
+                      <select name="department" value={form.department || ''} onChange={set}>
+                        <option value="">Select Department</option>
+                        {(COURSE_DEPARTMENTS[form.course] || []).map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Faculty</label>
+                      <input name="faculty_name" value={form.faculty_name || ''} onChange={set} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Semester</label>
+                      <select name="semester" value={form.semester || 1} onChange={set}>
+                        {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                      </select>
+                    </div>
                     <div className="form-group"><label className="form-label">Credits</label><input type="number" name="credits" value={form.credits || 3} onChange={set} /></div>
                     <div className="form-group">
                       <label className="form-label">Type</label>
@@ -129,7 +162,13 @@ export default function AcademicsModule() {
                     </div>
                     <div className="form-group"><label className="form-label">Start Date</label><input type="date" name="start_date" value={form.start_date || ''} onChange={set} required /></div>
                     <div className="form-group"><label className="form-label">End Date</label><input type="date" name="end_date" value={form.end_date || ''} onChange={set} /></div>
-                    <div className="form-group"><label className="form-label">Academic Year</label><input name="academic_year" value={form.academic_year || ''} onChange={set} placeholder="e.g. 2024-25" /></div>
+                    <div className="form-group">
+                      <label className="form-label">Academic Year</label>
+                      <select name="academic_year" value={form.academic_year || ''} onChange={set}>
+                        <option value="">Select Year</option>
+                        {['2024-25', '2025-26', '2026-27'].map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
                   </div>
                   <div className="form-group"><label className="form-label">Description</label><textarea name="description" value={form.description || ''} onChange={set} rows={2} /></div>
                   <div className="form-actions">

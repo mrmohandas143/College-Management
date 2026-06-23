@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import { getStudents } from '../../services/studentService'
+import { COURSES } from '../../utils/constants'
 
 const STATUS_BADGE = { present: 'badge-success', absent: 'badge-danger', late: 'badge-warning', excused: 'badge-gray' }
 
@@ -13,6 +14,8 @@ export default function AttendanceModule() {
   const [saving, setSaving]     = useState(false)
   const [summary, setSummary]   = useState(null)
   const [summaryId, setSummaryId] = useState('')
+  const [subjects, setSubjects]   = useState([])
+  const [faculty, setFaculty]     = useState([])
 
   useEffect(() => {
     api.get('/attendance/sessions/').then(r => setSessions(r.data.results ?? r.data))
@@ -23,9 +26,20 @@ export default function AttendanceModule() {
       list.forEach(s => { init[s.id] = 'present' })
       setRecords(init)
     })
+    api.get('/academics/subjects/').then(r => setSubjects(r.data.results ?? r.data))
+    api.get('/faculty/').then(r => setFaculty(r.data.results ?? r.data))
   }, [])
 
-  const set = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const set = e => {
+    const { name, value } = e.target
+    setForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'course') {
+        updated.subject = ''
+      }
+      return updated
+    })
+  }
 
   const handleMark = async (e) => {
     e.preventDefault()
@@ -72,12 +86,42 @@ export default function AttendanceModule() {
             <div className="card-header"><h3>Session Details</h3></div>
             <div className="card-body">
               <div className="form-grid">
-                {[['Date', 'date', 'date'], ['Course', 'course', 'text'], ['Subject', 'subject', 'text'], ['Faculty', 'faculty_name', 'text'], ['Period', 'period', 'number']].map(([l, n, t]) => (
-                  <div key={n} className="form-group">
-                    <label className="form-label">{l}</label>
-                    <input type={t} name={n} value={form[n]} onChange={set} required={['date', 'course'].includes(n)} />
-                  </div>
-                ))}
+                <div className="form-group">
+                  <label className="form-label">Date</label>
+                  <input type="date" name="date" value={form.date} onChange={set} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Course</label>
+                  <select name="course" value={form.course} onChange={set} required>
+                    <option value="">Select Course</option>
+                    {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Subject</label>
+                  <select name="subject" value={form.subject} onChange={set} required>
+                    <option value="">Select Subject</option>
+                    {subjects.filter(sub => !form.course || sub.course === form.course).map(sub => (
+                      <option key={sub.id} value={sub.name}>{sub.name} ({sub.code})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Faculty</label>
+                  <select name="faculty_name" value={form.faculty_name} onChange={set}>
+                    <option value="">Select Faculty</option>
+                    {faculty.map(f => {
+                      const name = `${f.first_name} ${f.last_name}`
+                      return <option key={f.id} value={name}>{name}</option>
+                    })}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Period</label>
+                  <select name="period" value={form.period} onChange={set}>
+                    {[1,2,3,4,5,6,7,8].map(p => <option key={p} value={p}>Period {p}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
           </div>

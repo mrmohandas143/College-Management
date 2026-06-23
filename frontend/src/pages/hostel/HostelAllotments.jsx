@@ -11,16 +11,19 @@ export default function HostelAllotments() {
   const [showForm, setShowForm]     = useState(false)
   const [filterStatus, setFilterStatus] = useState('active')
   const [form, setForm] = useState({ room: '', student_name: '', student_id: '', contact: '', allotment_date: new Date().toISOString().split('T')[0] })
+  const [students, setStudents]     = useState([])
 
   const load = async (status = filterStatus) => {
     setLoading(true)
     const params = status ? { status } : {}
-    const [aRes, rRes] = await Promise.all([
+    const [aRes, rRes, sRes] = await Promise.all([
       api.get(ENDPOINTS.HOSTEL_ALLOTMENTS, { params }),
       api.get(ENDPOINTS.HOSTEL_ROOMS),
+      api.get(ENDPOINTS.STUDENTS),
     ])
     setAllotments(aRes.data.results ?? aRes.data)
     setRooms(rRes.data.results ?? rRes.data)
+    setStudents(sRes.data.results ?? sRes.data)
     setLoading(false)
   }
 
@@ -30,7 +33,8 @@ export default function HostelAllotments() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await api.post(ENDPOINTS.HOSTEL_ALLOTMENTS, form)
+    const { student, ...payload } = form
+    await api.post(ENDPOINTS.HOSTEL_ALLOTMENTS, payload)
     setShowForm(false)
     setForm({ room: '', student_name: '', student_id: '', contact: '', allotment_date: new Date().toISOString().split('T')[0] })
     load()
@@ -70,12 +74,26 @@ export default function HostelAllotments() {
                   </select>
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Student</label>
+                  <select className="form-control" name="student" value={form.student || ''} onChange={e => {
+                    const st = students.find(s => s.id === Number(e.target.value))
+                    if (st) {
+                      setForm(f => ({ ...f, student: st.id, student_name: `${st.first_name} ${st.last_name}`, student_id: st.register_number, contact: st.phone || '' }))
+                    } else {
+                      setForm(f => ({ ...f, student: '', student_name: '', student_id: '', contact: '' }))
+                    }
+                  }} required>
+                    <option value="">Select student</option>
+                    {students.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.register_number})</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Student Name</label>
-                  <input className="form-control" name="student_name" value={form.student_name} onChange={set} required />
+                  <input className="form-control" name="student_name" value={form.student_name} readOnly style={{ background: 'var(--bg)' }} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Student ID</label>
-                  <input className="form-control" name="student_id" value={form.student_id} onChange={set} />
+                  <input className="form-control" name="student_id" value={form.student_id} readOnly style={{ background: 'var(--bg)' }} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Contact</label>

@@ -88,9 +88,9 @@ export default function Dashboard() {
   })
   const deptFacMap = {}
   faculty.forEach(f => {
-    if (!f.department) return
-    if (!deptFacMap[f.department]) deptFacMap[f.department] = 0
-    deptFacMap[f.department]++
+    if (!f.course) return
+    if (!deptFacMap[f.course]) deptFacMap[f.course] = 0
+    deptFacMap[f.course]++
   })
   const departments = Object.values(deptMap).map((d, i) => ({
     ...d,
