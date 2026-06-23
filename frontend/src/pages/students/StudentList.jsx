@@ -73,8 +73,8 @@ export default function StudentList() {
   if (role === 'student') return null
 
   return (
-    <div>
-      <div className="page-header">
+    <div className="fade-in">
+      <div className="page-header slide-down">
         <div><h1>Students</h1><p>{students.length} total students</p></div>
         {canAdd && <Link to="/students/add" className="btn btn-primary">+ Add Student</Link>}
       </div>
@@ -101,12 +101,18 @@ export default function StudentList() {
                 </tr>
               </thead>
               <tbody>
-                {students.map(s => (
-                  <tr key={s.id}>
+                {students.map((s, idx) => (
+                  <tr key={s.id} className="row-anim" style={{ '--i': idx }}>
                     <td>
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{s.first_name} {s.last_name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.email}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {s.photo
+                          ? <img src={s.photo.startsWith('http') ? s.photo : `http://localhost:8000${s.photo}`} alt={s.first_name} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', flexShrink: 0 }} />
+                          : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{s.first_name?.[0]}{s.last_name?.[0]}</div>
+                        }
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{s.first_name} {s.last_name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.email}</div>
+                        </div>
                       </div>
                     </td>
                     <td>{s.register_number}</td>

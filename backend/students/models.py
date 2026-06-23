@@ -24,8 +24,10 @@ class Student(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Keep register_number in sync with roll_number if not set
-        if not self.register_number:
+        # roll_number mirrors register_number — keeps the unique constraint satisfied
+        if self.register_number:
+            self.roll_number = self.register_number
+        elif self.roll_number:
             self.register_number = self.roll_number
         super().save(*args, **kwargs)
 
