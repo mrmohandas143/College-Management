@@ -14,6 +14,41 @@ function genEmpId() {
   return 'EMP' + Date.now().toString().slice(-5)
 }
 
+const Field = ({ label, name, type = 'text', required, placeholder, form, set, errors }) => (
+  <div className="form-group">
+    <label className="form-label">{label}{required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}</label>
+    <input
+      className={`form-control${errors[name] ? ' is-invalid' : ''}`}
+      type={type} name={name} value={form[name] ?? ''}
+      onChange={set} placeholder={placeholder}
+    />
+    {errors[name] && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 3 }}>{errors[name]}</div>}
+  </div>
+)
+
+const Select = ({ label, name, options, required, form, set, errors }) => (
+  <div className="form-group">
+    <label className="form-label">{label}{required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}</label>
+    <select className="form-control" name={name} value={form[name] ?? ''} onChange={set}>
+      <option value="">— Select —</option>
+      {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+    </select>
+    {errors[name] && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 3 }}>{errors[name]}</div>}
+  </div>
+)
+
+const Section = ({ title, children }) => (
+  <div style={{ marginBottom: 24 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>
+      <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0 16px' }}>
+      {children}
+    </div>
+  </div>
+)
+
 export default function EmployeeForm() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -42,41 +77,6 @@ export default function EmployeeForm() {
     } finally { setSaving(false) }
   }
 
-  const Field = ({ label, name, type = 'text', required, placeholder }) => (
-    <div className="form-group">
-      <label className="form-label">{label}{required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}</label>
-      <input
-        className={`form-control${errors[name] ? ' is-invalid' : ''}`}
-        type={type} name={name} value={form[name] ?? ''}
-        onChange={set} placeholder={placeholder}
-      />
-      {errors[name] && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 3 }}>{errors[name]}</div>}
-    </div>
-  )
-
-  const Select = ({ label, name, options, required }) => (
-    <div className="form-group">
-      <label className="form-label">{label}{required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}</label>
-      <select className="form-control" name={name} value={form[name] ?? ''} onChange={set}>
-        <option value="">— Select —</option>
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-      {errors[name] && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 3 }}>{errors[name]}</div>}
-    </div>
-  )
-
-  const Section = ({ title, children }) => (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0 16px' }}>
-        {children}
-      </div>
-    </div>
-  )
-
   return (
     <div>
       <div className="page-header">
@@ -92,12 +92,12 @@ export default function EmployeeForm() {
           <form onSubmit={handleSubmit}>
 
             <Section title="Personal Information">
-              <Field label="First Name" name="first_name" required />
-              <Field label="Last Name" name="last_name" required />
-              <Field label="Email" name="email" type="email" required />
-              <Field label="Phone" name="phone" placeholder="e.g. 9876543210" />
-              <Select label="Gender" name="gender" options={[['male','Male'],['female','Female'],['other','Other']]} />
-              <Field label="Date of Birth" name="date_of_birth" type="date" />
+              <Field label="First Name" name="first_name" required form={form} set={set} errors={errors} />
+              <Field label="Last Name" name="last_name" required form={form} set={set} errors={errors} />
+              <Field label="Email" name="email" type="email" required form={form} set={set} errors={errors} />
+              <Field label="Phone" name="phone" placeholder="e.g. 9876543210" form={form} set={set} errors={errors} />
+              <Select label="Gender" name="gender" options={[['male','Male'],['female','Female'],['other','Other']]} form={form} set={set} errors={errors} />
+              <Field label="Date of Birth" name="date_of_birth" type="date" form={form} set={set} errors={errors} />
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                 <label className="form-label">Address</label>
                 <textarea className="form-control" name="address" value={form.address} onChange={set} rows={2} placeholder="Full address" />
@@ -128,13 +128,13 @@ export default function EmployeeForm() {
                 {errors.department && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 3 }}>{errors.department}</div>}
               </div>
 
-              <Field label="Designation" name="designation" required placeholder="e.g. Professor, Clerk" />
+              <Field label="Designation" name="designation" required placeholder="e.g. Professor, Clerk" form={form} set={set} errors={errors} />
               <Select label="Employment Type" name="employment_type" required
-                options={[['full_time','Full Time'],['part_time','Part Time'],['contract','Contract']]} />
-              <Field label="Date of Joining" name="date_of_joining" type="date" required />
-              <Field label="Basic Salary (₹)" name="basic_salary" type="number" required placeholder="e.g. 45000" />
+                options={[['full_time','Full Time'],['part_time','Part Time'],['contract','Contract']]} form={form} set={set} errors={errors} />
+              <Field label="Date of Joining" name="date_of_joining" type="date" required form={form} set={set} errors={errors} />
+              <Field label="Basic Salary (₹)" name="basic_salary" type="number" required placeholder="e.g. 45000" form={form} set={set} errors={errors} />
               <Select label="Status" name="status" required
-                options={[['active','Active'],['inactive','Inactive'],['terminated','Terminated']]} />
+                options={[['active','Active'],['inactive','Inactive'],['terminated','Terminated']]} form={form} set={set} errors={errors} />
             </Section>
 
             {/* Summary preview */}

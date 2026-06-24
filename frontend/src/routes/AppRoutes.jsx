@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from '../components/ProtectedRoute'
 import DashboardLayout from '../layouts/DashboardLayout'
 
@@ -20,6 +20,8 @@ import AddStudent     from '../pages/students/AddStudent'
 import EditStudent    from '../pages/students/EditStudent'
 import StudentProfile from '../pages/students/StudentProfile'
 import MyProfile      from '../pages/students/MyProfile'
+import MyAttendance   from '../pages/students/MyAttendance'
+import MyMarks        from '../pages/students/MyMarks'
 
 // Faculty
 import FacultyList    from '../pages/faculty/FacultyList'
@@ -107,8 +109,6 @@ const LIBRARY  = ['super_admin', 'admin', 'librarian']
 const PLACE    = ['super_admin', 'admin', 'placement_officer']
 const TRANS    = ['super_admin', 'admin', 'transport_incharge']
 const ALUMNI   = ['super_admin', 'admin', 'alumni_coordinator']
-const ALL_STAFF = [...new Set([...ADMIN, ...HR, ...FINANCE, ...ACADEMIC, ...HOSTEL, ...LIBRARY, ...PLACE, ...TRANS, ...ALUMNI])]
-
 const R = (roles, el) => <ProtectedRoute roles={roles}>{el}</ProtectedRoute>
 
 export default function AppRoutes() {
@@ -129,7 +129,9 @@ export default function AppRoutes() {
 
           {/* ── Student self-service ── */}
           <Route path="/my-profile" element={R(['student'], <MyProfile />)} />
-          <Route path="/fees/pay"   element={R(['student'], <StudentPayFee />)} />
+          <Route path="/my-attendance" element={R(['student'], <MyAttendance />)} />
+          <Route path="/my-marks" element={R(['student'], <MyMarks />)} />
+          <Route path="/fees/pay"   element={R(['student', 'parent', 'admin', 'super_admin', 'accountant'], <StudentPayFee />)} />
           <Route path="/parent-portal" element={R(['parent'], <ParentPortal />)} />
 
           {/* ── Student Management Module ── */}

@@ -4,18 +4,18 @@ import { jwtDecode } from 'jwt-decode'
 export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
+  const [user, setUser] = useState(() => {
     const token = localStorage.getItem('access')
     if (token) {
       try {
-        setUser(jwtDecode(token))
+        return jwtDecode(token)
       } catch {
         localStorage.clear()
+        return null
       }
     }
-  }, [])
+    return null
+  })
 
   const login = (access, refresh) => {
     localStorage.setItem('access', access)

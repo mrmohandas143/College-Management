@@ -1,5 +1,5 @@
-from rest_framework import generics, filters
-from rest_framework.exceptions import PermissionDenied
+# pyrefly: ignore [missing-import]
+from rest_framework import generics, filters, exceptions
 from .models import Student
 from .serializers import StudentSerializer
 from accounts.permissions import IsAdmin, IsAnyAuthenticated
@@ -37,5 +37,7 @@ class StudentDetailView(generics.RetrieveUpdateDestroyAPIView):
         obj = super().get_object()
         user = self.request.user
         if user.role == 'student' and user.linked_student_id != obj.id:
-            raise PermissionDenied('You can only view your own profile.')
+            raise exceptions.PermissionDenied('You can only view your own profile.')
+        if user.role == 'parent' and user.linked_student_id != obj.id:
+            raise exceptions.PermissionDenied("You can only view your child's profile.")
         return obj

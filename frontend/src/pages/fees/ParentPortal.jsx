@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import Loader from '../../components/Loader'
 import { formatDate, formatCurrency, statusBadge } from '../../utils/helpers'
@@ -212,6 +213,11 @@ export default function ParentPortal() {
               <span className="badge badge-gray">Roll: {student.roll_number}</span>
               <span className={`badge ${student.status === 'active' ? 'badge-success' : 'badge-gray'}`}>{student.status}</span>
             </div>
+          </div>
+          <div style={{ marginLeft: 'auto', alignSelf: 'center' }}>
+            <Link to={`/fees/pay?student=${student.id}`} className="btn btn-primary">
+              View Fee Structure →
+            </Link>
           </div>
         </div>
       </div>

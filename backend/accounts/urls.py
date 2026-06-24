@@ -6,7 +6,7 @@ from .views import (
     assign_role, set_user_password,
     list_users, create_system_user, update_user, set_password, delete_user,
     list_custom_roles, create_custom_role, custom_role_detail,
-    convert_faculty_to_user,
+    convert_faculty_to_user, send_faculty_credentials,
 )
 
 urlpatterns = [
@@ -29,4 +29,6 @@ urlpatterns = [
     path('custom-roles/<int:role_id>/',         custom_role_detail),
     # Faculty → User conversion
     path('convert-faculty/',                    convert_faculty_to_user),
+    # Send Faculty Credentials
+    path('send-faculty-credentials/',           send_faculty_credentials),
 ]

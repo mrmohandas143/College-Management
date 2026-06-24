@@ -7,6 +7,8 @@ const TITLES = {
   '/dashboard': 'Dashboard',
   '/my-profile': 'My Profile',
   '/my-fees': 'My Fees',
+  '/my-attendance': 'My Attendance',
+  '/my-marks': 'My Marks',
   '/admin-panel': 'Admin Panel',
   '/students': 'Students',
   '/students/add': 'Add Student',
@@ -60,8 +62,9 @@ export default function Navbar({ onMenuClick }) {
 
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'super_admin') {
-      api.get('/fees/notifications/').then(r => {
-        setUnread(r.data.filter(n => !n.is_read).length)
+      api.get('/notifications/').then(r => {
+        const notifs = r.data.results ?? r.data
+        setUnread(notifs.filter(n => n.is_active).length)
       }).catch(() => {})
     }
   }, [pathname, user])

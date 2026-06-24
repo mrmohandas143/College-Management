@@ -1,11 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import api from '../../api/axios'
 import { PermissionGrid } from '../faculty/FacultyList'
 
 function ActionMenu({ items }) {
   const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+    const row = ref.current.closest('tr')
+    if (row) {
+      if (open) {
+        row.style.zIndex = '30'
+        row.style.position = 'relative'
+      } else {
+        row.style.zIndex = ''
+        row.style.position = ''
+      }
+    }
+  }, [open])
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 18, lineHeight: 1, color: 'var(--text)' }}
@@ -51,6 +67,51 @@ const ROLE_COLOR = {
   parent: '#059669', student: '#2563eb',
   custom: '#7c3aed',
 }
+
+const RoleBadge = ({ role }) => (
+  <span style={{
+    display: 'inline-block', padding: '2px 10px', borderRadius: 999,
+    fontSize: 11, fontWeight: 600,
+    background: (ROLE_COLOR[role] || '#666') + '18',
+    color: ROLE_COLOR[role] || '#666',
+    border: `1px solid ${(ROLE_COLOR[role] || '#666')}40`,
+  }}>
+    {ROLES.find(r => r.value === role)?.label || role}
+  </span>
+)
+
+const PwInput = ({ label, name, value, onChange, showPw, setShowPw }) => (
+  <div className="form-group">
+    <label className="form-label">{label}</label>
+    <div style={{ position: 'relative' }}>
+      <input className="form-control" type={showPw ? 'text' : 'password'}
+        name={name} value={value} onChange={onChange}
+        required minLength={6} placeholder="Min 6 characters" style={{ paddingRight: 40 }} />
+      <button type="button" onClick={() => setShowPw(s => !s)}
+        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+        {showPw
+          ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" /></svg>
+          : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+        }
+      </button>
+    </div>
+  </div>
+)
+
+const Modal = ({ title, onClose, wide, error, children }) => (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16, overflowY: 'auto' }}>
+    <div className="card" style={{ width: '100%', maxWidth: wide ? 720 : 460, margin: 'auto' }}>
+      <div className="card-body">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ margin: 0 }}>{title}</h3>
+          <button className="btn btn-outline btn-sm" onClick={onClose}>✕</button>
+        </div>
+        {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
+        {children}
+      </div>
+    </div>
+  </div>
+)
 
 export default function UserManagement() {
   const [users, setUsers]           = useState([])
@@ -187,51 +248,6 @@ export default function UserManagement() {
 
   const filtered = filterRole ? users.filter(u => u.role === filterRole) : users
 
-  const RoleBadge = ({ role }) => (
-    <span style={{
-      display: 'inline-block', padding: '2px 10px', borderRadius: 999,
-      fontSize: 11, fontWeight: 600,
-      background: (ROLE_COLOR[role] || '#666') + '18',
-      color: ROLE_COLOR[role] || '#666',
-      border: `1px solid ${(ROLE_COLOR[role] || '#666')}40`,
-    }}>
-      {ROLES.find(r => r.value === role)?.label || role}
-    </span>
-  )
-
-  const PwInput = ({ label, name, value, onChange }) => (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      <div style={{ position: 'relative' }}>
-        <input className="form-control" type={showPw ? 'text' : 'password'}
-          name={name} value={value} onChange={onChange}
-          required minLength={6} placeholder="Min 6 characters" style={{ paddingRight: 40 }} />
-        <button type="button" onClick={() => setShowPw(s => !s)}
-          style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-          {showPw
-            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" /></svg>
-            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-          }
-        </button>
-      </div>
-    </div>
-  )
-
-  const Modal = ({ title, onClose, wide, children }) => (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16, overflowY: 'auto' }}>
-      <div className="card" style={{ width: '100%', maxWidth: wide ? 720 : 460, margin: 'auto' }}>
-        <div className="card-body">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>{title}</h3>
-            <button className="btn btn-outline btn-sm" onClick={onClose}>✕</button>
-          </div>
-          {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
-          {children}
-        </div>
-      </div>
-    </div>
-  )
-
   return (
     <div>
       <div className="page-header">
@@ -317,7 +333,7 @@ export default function UserManagement() {
 
       {/* ── Create User Modal ── */}
       {showCreate && (
-        <Modal title="Create New User" onClose={() => setShowCreate(false)} wide>
+        <Modal title="Create New User" onClose={() => setShowCreate(false)} error={error} wide>
           <form onSubmit={handleCreate}>
             {/* Row: username + email */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -367,8 +383,8 @@ export default function UserManagement() {
 
             {/* Row: password + confirm */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
-              <PwInput label="Password *" name="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} />
-              <PwInput label="Confirm Password *" name="confirm" value={createForm.confirm} onChange={e => setCreateForm(f => ({ ...f, confirm: e.target.value }))} />
+              <PwInput label="Password *" name="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} showPw={showPw} setShowPw={setShowPw} />
+              <PwInput label="Confirm Password *" name="confirm" value={createForm.confirm} onChange={e => setCreateForm(f => ({ ...f, confirm: e.target.value }))} showPw={showPw} setShowPw={setShowPw} />
             </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
@@ -381,13 +397,13 @@ export default function UserManagement() {
 
       {/* ── Set Password Modal ── */}
       {pwModal && (
-        <Modal title="Set Password" onClose={() => setPwModal(null)}>
+        <Modal title="Set Password" onClose={() => setPwModal(null)} error={error}>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
             Setting password for <strong>{pwModal.username}</strong>
           </p>
           <form onSubmit={handleSetPassword}>
-            <PwInput label="New Password *" name="password" value={pwForm.password} onChange={e => setPwForm(f => ({ ...f, password: e.target.value }))} />
-            <PwInput label="Confirm Password *" name="confirm" value={pwForm.confirm} onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))} />
+            <PwInput label="New Password *" name="password" value={pwForm.password} onChange={e => setPwForm(f => ({ ...f, password: e.target.value }))} showPw={showPw} setShowPw={setShowPw} />
+            <PwInput label="Confirm Password *" name="confirm" value={pwForm.confirm} onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))} showPw={showPw} setShowPw={setShowPw} />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
               <button type="button" className="btn btn-outline" onClick={() => setPwModal(null)}>Cancel</button>
               <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Update Password'}</button>
@@ -398,7 +414,7 @@ export default function UserManagement() {
 
       {/* ── Change Role Modal ── */}
       {roleModal && (
-        <Modal title="Change Role" onClose={() => setRoleModal(null)}>
+        <Modal title="Change Role" onClose={() => setRoleModal(null)} error={error}>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
             Changing role for <strong>{roleModal.username}</strong>
           </p>
@@ -419,7 +435,7 @@ export default function UserManagement() {
 
       {/* ── Manage Permissions Modal ── */}
       {permModal && (
-        <Modal title={`Permissions — ${permModal.user.username}`} onClose={() => setPermModal(null)} wide>
+        <Modal title={`Permissions — ${permModal.user.username}`} onClose={() => setPermModal(null)} error={error} wide>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
             Check the features this user can access. Each box is a priority tier.
           </p>

@@ -118,6 +118,8 @@ export default function Sidebar({ open }) {
             <div className="nav-label">My Account</div>
             {link('/my-profile', 'profile', 'My Profile')}
             {link('/fees/pay', 'fees', 'My Fees')}
+            {link('/my-attendance', 'attendance', 'My Attendance')}
+            {link('/my-marks', 'examination', 'My Marks')}
           </div>
         )}
 

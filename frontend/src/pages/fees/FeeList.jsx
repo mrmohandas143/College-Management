@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getFees, deleteFee, updateFee, patchFee } from '../../services/feeService'
 import Loader from '../../components/Loader'
@@ -93,8 +93,24 @@ function downloadReceipt(fee) {
 
 function ActionMenu({ items }) {
   const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+    const row = ref.current.closest('tr')
+    if (row) {
+      if (open) {
+        row.style.zIndex = '30'
+        row.style.position = 'relative'
+      } else {
+        row.style.zIndex = ''
+        row.style.position = ''
+      }
+    }
+  }, [open])
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button onClick={() => setOpen(o => !o)} className="btn btn-outline btn-sm" style={{ padding: '4px 10px', fontSize: 18, lineHeight: 1 }}>⋮</button>
       {open && (
         <>

@@ -11,6 +11,21 @@ const Bar = ({ value, max, color = 'var(--primary)' }) => (
   </div>
 )
 
+const StatCard = ({ label, value, sub, color, icon }) => (
+  <div className="card">
+    <div className="card-body" style={{ padding: '1rem 1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{label}</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: color || 'inherit' }}>{value}</div>
+          {sub && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{sub}</div>}
+        </div>
+        {icon && <div style={{ fontSize: '1.5rem', opacity: 0.25 }}>{icon}</div>}
+      </div>
+    </div>
+  </div>
+)
+
 export default function HRReports() {
   const [month, setMonth]       = useState(new Date().getMonth() + 1)
   const [year, setYear]         = useState(new Date().getFullYear())
@@ -27,21 +42,6 @@ export default function HRReports() {
   }
 
   useEffect(() => { load() }, [])
-
-  const StatCard = ({ label, value, sub, color, icon }) => (
-    <div className="card">
-      <div className="card-body" style={{ padding: '1rem 1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{label}</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: color || 'inherit' }}>{value}</div>
-            {sub && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{sub}</div>}
-          </div>
-          {icon && <div style={{ fontSize: '1.5rem', opacity: 0.25 }}>{icon}</div>}
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <div className="page-container">

@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.conf import settings
 from accounts.permissions import IsAdmin
 from students.models import Student
 from .models import User, CustomRole
@@ -248,6 +250,72 @@ def convert_faculty_to_user(request):
     )
     return Response({'id': user.id, 'username': user.username, 'role': user.role,
                      'message': f'Faculty converted to user "{username}".'}, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdmin])
+def send_faculty_credentials(request):
+    """Create a faculty login user and send credentials email."""
+    username = request.data.get('username', '').strip()
+    password = request.data.get('password', '')
+    email = request.data.get('email', '').strip()
+    name = request.data.get('name', '').strip()
+
+    if not all([username, password, email]):
+        return Response({'error': 'username, password and email are required.'}, status=400)
+
+    if User.objects.filter(username=username).exists():
+        return Response({'error': f'Username "{username}" is already taken.'}, status=400)
+
+    user = User.objects.filter(email=email).first()
+    if user:
+        user.set_password(password)
+        user.username = username
+        user.full_name = name
+        user.role = 'faculty'
+        user.save()
+    else:
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            role='faculty',
+            full_name=name
+        )
+
+    # Email notification
+    subject = 'Your Faculty Account Credentials'
+    message = f"""Dear {name},
+
+Your faculty account has been created successfully. Here are your login credentials:
+
+Username: {username}
+Password: {password}
+
+Please log in and change your password as soon as possible.
+
+Best regards,
+College Management System
+"""
+    email_sent = False
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+        email_sent = True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+    msg = f'Credentials sent to {email}.' if email_sent else 'Credentials created, but email delivery failed.'
+    return Response({
+        'username': username,
+        'password': password,
+        'message': msg
+    }, status=status.HTTP_201_CREATED)
 
 
 # ── Legacy ───────────────────────────────────────────────────────────────────

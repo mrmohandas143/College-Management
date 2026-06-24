@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../../api/axios'
 import Loader from '../../components/Loader'
 import useAuth from '../../hooks/useAuth'
@@ -103,6 +103,11 @@ function downloadReceipt(student, feeType, amount, paymentMode, txnId) {
 export default function StudentPayFee() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const queryStudentId = searchParams.get('student')
+  const resolvedStudentId = queryStudentId ? Number(queryStudentId) : user?.student_id
+
   const [student, setStudent] = useState(null)
   const [paidFees, setPaidFees] = useState([])
   const [loading, setLoading] = useState(true)
@@ -114,17 +119,22 @@ export default function StudentPayFee() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!user?.student_id) { setLoading(false); return }
-    api.get(`/students/${user.student_id}/`)
+    if (!resolvedStudentId) {
+      setTimeout(() => {
+        setLoading(false)
+      }, 0)
+      return
+    }
+    api.get(`/students/${resolvedStudentId}/`)
       .then(r => {
         setStudent(r.data)
-        api.get('/fees/')
-          .then(fr => setPaidFees(fr.data.filter(f => f.student === user.student_id && f.status === 'paid')))
+        api.get(`/fees/?student=${resolvedStudentId}`)
+          .then(fr => setPaidFees(fr.data.filter(f => f.status === 'paid')))
           .catch(() => {})
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [user])
+  }, [resolvedStudentId])
 
   const baseCourse = student?.course?.split(' - ')[0] || student?.course || ''
   const courseFees = COURSE_FEES[baseCourse] || COURSE_FEES['B.Sc']
@@ -142,7 +152,7 @@ export default function StudentPayFee() {
       const today = new Date().toISOString().split('T')[0]
       const due = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       await api.post('/fees/', {
-        student: user.student_id,
+        student: resolvedStudentId,
         fee_type: selected.label,
         amount: selected.amount,
         discount_amount: 0,
@@ -153,7 +163,7 @@ export default function StudentPayFee() {
         payment_mode: paymentMode,
         transaction_id: txnId,
         academic_year: '2024-25',
-        description: `${selected.label} paid by student - ${student.course}`,
+        description: `${selected.label} paid by ${user?.role || 'student'} - ${student.course}`,
       })
       setSuccess({ feeType: selected.label, amount: selected.amount })
       setPaidFees(prev => [...prev, { fee_type: selected.label, status: 'paid' }])
@@ -180,14 +190,32 @@ export default function StudentPayFee() {
           <h1>Fee Details & Payment</h1>
           <p>{student.course} · {student.register_number}</p>
         </div>
-        <button onClick={() => navigate('/my-profile')} className="btn btn-outline">← Back</button>
+        <button onClick={() => {
+          if (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'accountant') {
+            navigate(`/students/${resolvedStudentId}`)
+          } else if (user?.role === 'parent') {
+            navigate('/parent-portal')
+          } else {
+            navigate('/my-profile')
+          }
+        }} className="btn btn-outline">← Back</button>
       </div>
 
       {success && (
-        <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: 10, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          background: 'var(--success-bg)',
+          border: '1px solid var(--success-border)',
+          color: 'var(--success-text)',
+          borderRadius: 10,
+          padding: '16px 20px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
           <div>
-            <div style={{ fontWeight: 700, color: '#15803d' }}>Payment Successful!</div>
-            <div style={{ fontSize: 13, color: '#166534', marginTop: 2 }}>{success.feeType} — {formatCurrency(success.amount)}</div>
+            <div style={{ fontWeight: 700 }}>Payment Successful!</div>
+            <div style={{ fontSize: 13, opacity: 0.9, marginTop: 2 }}>{success.feeType} — {formatCurrency(success.amount)}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => downloadReceipt(student, success.feeType, success.amount, paymentMode, txnId || 'N/A')} className="btn btn-primary">
@@ -205,7 +233,13 @@ export default function StudentPayFee() {
         </div>
         <div className="card-body">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12 }}>
-            {FEE_TYPES.map(ft => {
+            {FEE_TYPES
+              .filter(ft => {
+                if (ft.key === 'transport' && student?.is_hosteler) return false;
+                if (ft.key === 'hostel' && !student?.is_hosteler) return false;
+                return true;
+              })
+              .map(ft => {
               const amount = courseFees[ft.key] || 0
               const paid = isPaid(ft.key)
               const isSelected = selected?.key === ft.key
@@ -213,25 +247,18 @@ export default function StudentPayFee() {
                 <div
                   key={ft.key}
                   onClick={() => !paid && setSelected(isSelected ? null : { ...ft, amount })}
-                  style={{
-                    border: `2px solid ${paid ? '#bbf7d0' : isSelected ? ft.color : 'var(--border)'}`,
-                    background: paid ? '#f0fdf4' : isSelected ? ft.bg : 'var(--white)',
-                    borderRadius: 12, padding: '16px',
-                    cursor: paid ? 'default' : 'pointer',
-                    transition: 'all 0.15s',
-                    boxShadow: isSelected ? `0 0 0 3px ${ft.color}25` : 'none',
-                  }}
+                  className={`fee-card ${ft.key} ${paid ? 'paid' : ''} ${isSelected ? 'selected' : ''}`}
                 >
-                  <div style={{ fontSize: 12, fontWeight: 700, color: paid ? '#15803d' : ft.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ft.label}</div>
+                  <div className="fee-title" style={{ fontSize: 12, fontWeight: 700, color: paid ? undefined : 'var(--fee-color)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ft.label}</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '6px 0' }}>{formatCurrency(amount)}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>Academic Year 2024-25</div>
                   {paid ? (
-                    <div style={{ color: '#15803d', fontWeight: 600, fontSize: 13 }}>Paid</div>
+                    <div className="fee-status" style={{ fontWeight: 600, fontSize: 13 }}>Paid</div>
                   ) : (
                     <div style={{
                       padding: '6px 0', textAlign: 'center', fontSize: 13, fontWeight: 600, borderRadius: 6,
-                      background: isSelected ? ft.color : 'var(--primary-light)',
-                      color: isSelected ? '#fff' : 'var(--primary)',
+                      background: isSelected ? 'var(--fee-color)' : 'var(--primary-light)',
+                      color: isSelected ? '#fff' : 'var(--fee-color)',
                     }}>
                       {isSelected ? '✓ Selected' : 'Pay Now'}
                     </div>

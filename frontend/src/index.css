@@ -375,10 +375,10 @@ tbody tr:hover { background: var(--bg); }
   font-size: 13px; margin-bottom: 16px;
   display: flex; align-items: flex-start; gap: 8px;
 }
-.alert-error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-.alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-.alert-warning { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-.alert-info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.alert-error   { background: var(--error-bg); color: var(--error-text); border: 1px solid var(--error-border); }
+.alert-success { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+.alert-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+.alert-info    { background: var(--info-bg); color: var(--info-text); border: 1px solid var(--info-border); }
 
 /* ── Loader ────────────────────────────────────────────────────────────── */
 .loader-wrap { display: flex; align-items: center; justify-content: center; padding: 80px; }
@@ -1158,4 +1158,87 @@ tbody tr:hover { background: var(--bg); }
   .photo-preview-anim, .field-anim, .row-anim {
     animation: none;
   }
+}
+
+/* ── Fee Payment Page Themes ────────────────────────────────────────────── */
+.fee-card {
+  --fee-color: var(--text);
+  --fee-bg: var(--bg-card);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+/* Fee types light mode variables */
+.fee-card.tuition   { --fee-color: #2563eb; --fee-bg: #eff6ff; }
+.fee-card.exam      { --fee-color: #7c3aed; --fee-bg: #f5f3ff; }
+.fee-card.library   { --fee-color: #059669; --fee-bg: #ecfdf5; }
+.fee-card.transport { --fee-color: #d97706; --fee-bg: #fffbeb; }
+.fee-card.lab       { --fee-color: #0891b2; --fee-bg: #ecfeff; }
+.fee-card.hostel    { --fee-color: #dc2626; --fee-bg: #fef2f2; }
+.fee-card.sports    { --fee-color: #16a34a; --fee-bg: #f0fdf4; }
+
+/* Selected state */
+.fee-card.selected {
+  border-color: var(--fee-color);
+  background: var(--fee-bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fee-color) 15%, transparent);
+}
+
+/* Paid state */
+.fee-card.paid {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  cursor: default;
+}
+.fee-card.paid .fee-title { color: #15803d !important; }
+.fee-card.paid .fee-status { color: #15803d !important; }
+
+/* Dark mode overrides for fee types */
+[data-theme="dark"] .fee-card.tuition   { --fee-color: #60a5fa; --fee-bg: rgba(96, 165, 250, 0.15); }
+[data-theme="dark"] .fee-card.exam      { --fee-color: #a78bfa; --fee-bg: rgba(167, 139, 250, 0.15); }
+[data-theme="dark"] .fee-card.library   { --fee-color: #34d399; --fee-bg: rgba(52, 211, 153, 0.15); }
+[data-theme="dark"] .fee-card.transport { --fee-color: #fbbf24; --fee-bg: rgba(251, 191, 36, 0.15); }
+[data-theme="dark"] .fee-card.lab       { --fee-color: #22d3ee; --fee-bg: rgba(34, 211, 238, 0.15); }
+[data-theme="dark"] .fee-card.hostel    { --fee-color: #f87171; --fee-bg: rgba(248, 113, 113, 0.15); }
+[data-theme="dark"] .fee-card.sports    { --fee-color: #34d399; --fee-bg: rgba(52, 211, 153, 0.15); }
+
+[data-theme="dark"] .fee-card.paid {
+  border-color: #166534;
+  background: rgba(20, 83, 45, 0.2);
+}
+[data-theme="dark"] .fee-card.paid .fee-title { color: #86efac !important; }
+[data-theme="dark"] .fee-card.paid .fee-status { color: #86efac !important; }
+
+/* Theme-aware Alert Variables */
+:root {
+  --success-bg: #dcfce7;
+  --success-border: #bbf7d0;
+  --success-text: #15803d;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+  --error-text: #b91c1c;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #b45309;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --info-text: #1d4ed8;
+}
+[data-theme="dark"] {
+  --success-bg: rgba(20, 83, 45, 0.2);
+  --success-border: #166534;
+  --success-text: #86efac;
+  --error-bg: rgba(127, 29, 29, 0.2);
+  --error-border: #991b1b;
+  --error-text: #fca5a5;
+  --warning-bg: rgba(120, 53, 15, 0.2);
+  --warning-border: #92400e;
+  --warning-text: #fcd34d;
+  --info-bg: rgba(30, 58, 95, 0.2);
+  --info-border: #1e40af;
+  --info-text: #93c5fd;
 }

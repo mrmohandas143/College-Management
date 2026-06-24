@@ -17,12 +17,17 @@ class FeeListCreateView(generics.ListCreateAPIView):
     def get_permissions(self):
         if self.request.method == 'GET':
             return [IsAnyAuthenticated()]
+        if self.request.method == 'POST':
+            from rest_framework.permissions import IsAuthenticated
+            return [IsAuthenticated()]
         return [IsAccountant()]
 
     def get_queryset(self):
         user = self.request.user
         qs = Fee.objects.select_related('student').order_by('-created_at')
         if user.role == 'student':
+            return qs.filter(student_id=user.linked_student_id)
+        if user.role == 'parent':
             return qs.filter(student_id=user.linked_student_id)
         status_filter = self.request.query_params.get('status')
         fee_type      = self.request.query_params.get('fee_type')
@@ -46,6 +51,8 @@ class FeeDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.role == 'student':
+            return Fee.objects.filter(student_id=user.linked_student_id)
+        if user.role == 'parent':
             return Fee.objects.filter(student_id=user.linked_student_id)
         return Fee.objects.all()
 
@@ -107,15 +114,31 @@ class GenerateBulkFeesView(APIView):
             return Response({'error': 'structure_id, student_ids, and due_date are required'}, status=400)
         try:
             structure = FeeStructure.objects.get(id=structure_id)
+            
+            final_student_ids = student_ids
+            if structure.fee_type == 'transport':
+                from hostel.models import HostelAllotment
+                target_students = Student.objects.filter(id__in=student_ids)
+                target_student_mapping = {s.id: (s.roll_number, s.register_number) for s in target_students}
+                
+                hosteler_student_ids = set()
+                for s_id, (roll, reg) in target_student_mapping.items():
+                    if HostelAllotment.objects.filter(
+                        student_id__in=[roll, reg],
+                        status='active'
+                    ).exists():
+                        hosteler_student_ids.add(s_id)
+                final_student_ids = [s_id for s_id in student_ids if s_id not in hosteler_student_ids]
+
             Fee.objects.bulk_create([
                 Fee(
                     student_id=s_id, fee_structure=structure,
                     amount=structure.amount, fee_type=structure.fee_type,
                     semester=structure.semester, academic_year=structure.academic_year,
                     due_date=due_date,
-                ) for s_id in student_ids
+                ) for s_id in final_student_ids
             ])
-            return Response({'message': f'Generated {len(student_ids)} fee records.'})
+            return Response({'message': f'Generated {len(final_student_ids)} fee records.'})
         except FeeStructure.DoesNotExist:
             return Response({'error': 'Fee structure not found'}, status=404)
 

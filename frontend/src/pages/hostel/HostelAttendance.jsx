@@ -24,16 +24,16 @@ export default function HostelAttendance() {
     })
   }, [])
 
-  useEffect(() => {
-    if (tab === 'history') loadHistory()
-  }, [tab, filterDate])
-
-  const loadHistory = async () => {
+  async function loadHistory() {
     setLoading(true)
     const res = await api.get(ENDPOINTS.HOSTEL_ATTENDANCE, { params: { date: filterDate } })
     setHistory(res.data.results ?? res.data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (tab === 'history') loadHistory()
+  }, [tab, filterDate])
 
   const handleSave = async () => {
     setSaving(true)

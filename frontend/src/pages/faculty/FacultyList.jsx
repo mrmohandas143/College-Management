@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getFaculty, deleteFaculty } from '../../services/facultyService'
 import Loader from '../../components/Loader'
@@ -128,8 +128,24 @@ export function PermissionGrid({ selected, onChange }) {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function ActionMenu({ items }) {
   const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+    const row = ref.current.closest('tr')
+    if (row) {
+      if (open) {
+        row.style.zIndex = '30'
+        row.style.position = 'relative'
+      } else {
+        row.style.zIndex = ''
+        row.style.position = ''
+      }
+    }
+  }, [open])
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button onClick={() => setOpen(o => !o)}
         style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 18, lineHeight: 1, color: 'var(--text)' }}>⋮</button>
       {open && (

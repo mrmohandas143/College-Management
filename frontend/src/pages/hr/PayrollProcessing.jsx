@@ -7,6 +7,16 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const fmt = (n) => '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })
 const pct = (part, whole) => whole ? ((Number(part) / Number(whole)) * 100).toFixed(1) + '%' : '0%'
 
+const SummaryCard = ({ label, value, color, sub }) => (
+  <div className="card">
+    <div className="card-body" style={{ textAlign: 'center', padding: '1rem' }}>
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+      <div style={{ fontSize: '1.35rem', fontWeight: 700, color: color || 'inherit' }}>{value}</div>
+      {sub && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{sub}</div>}
+    </div>
+  </div>
+)
+
 export default function PayrollProcessing() {
   const [month, setMonth]           = useState(new Date().getMonth() + 1)
   const [year, setYear]             = useState(new Date().getFullYear())
@@ -55,15 +65,6 @@ export default function PayrollProcessing() {
     return <span className={`badge badge-${c[s]}`}>{s}</span>
   }
 
-  const SummaryCard = ({ label, value, color, sub }) => (
-    <div className="card">
-      <div className="card-body" style={{ textAlign: 'center', padding: '1rem' }}>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-        <div style={{ fontSize: '1.35rem', fontWeight: 700, color: color || 'inherit' }}>{value}</div>
-        {sub && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{sub}</div>}
-      </div>
-    </div>
-  )
 
   return (
     <div className="page-container">

@@ -10,7 +10,7 @@ export default function StudentProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = ['admin', 'super_admin'].includes(user?.role)
   const [student, setStudent] = useState(null)
   const [password, setPassword] = useState('')
   const [pwMsg, setPwMsg] = useState('')
@@ -141,18 +141,23 @@ export default function StudentProfile() {
         </div>
       )}
 
-      {/* Fees redirect — both admin and student */}
-      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
-        <div>
-          <div style={{ fontWeight: 600 }}>Fee Records</div>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            <span>{student.register_number}</span>
-            <span style={{ margin: '0 8px' }}>·</span>
-            <span>{student.course}</span>
+      {/* Fees redirect — admin/super admin/accountant */}
+      {['admin', 'super_admin', 'accountant'].includes(user?.role) && (
+        <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
+          <div>
+            <div style={{ fontWeight: 600 }}>Fees & Payments</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              <span>{student.register_number}</span>
+              <span style={{ margin: '0 8px' }}>·</span>
+              <span>{student.course}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link to={`/fees?student=${id}`} className="btn btn-outline">View Transactions</Link>
+            <Link to={`/fees/pay?student=${id}`} className="btn btn-primary">View Fee Structure →</Link>
           </div>
         </div>
-        <Link to={isAdmin ? `/fees?student=${id}` : '/fees'} className="btn btn-primary">View Fees →</Link>
-      </div>
+      )}
     </div>
   )
 }

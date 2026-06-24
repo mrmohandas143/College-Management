@@ -30,12 +30,7 @@ export default function AttendanceManagement() {
     })
   }, [])
 
-  useEffect(() => {
-    if (tab === 'mark') loadExisting()
-    if (tab === 'summary') loadSummary()
-  }, [date, tab, month, year])
-
-  const loadExisting = async () => {
+  async function loadExisting() {
     const res = await getAttendance({ date })
     const map = {}
     ;(res.data.results ?? res.data).forEach(r => { map[r.employee] = r.status })
@@ -46,13 +41,18 @@ export default function AttendanceManagement() {
       return updated
     })
   }
-
-  const loadSummary = async () => {
+  
+  async function loadSummary() {
     setLoading(true)
     const res = await getAttendanceSummary({ month, year })
     setSummary(res.data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (tab === 'mark') loadExisting()
+    if (tab === 'summary') loadSummary()
+  }, [date, tab, month, year])
 
   const handleBulkMark = async () => {
     setSaving(true)
